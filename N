@@ -1,0 +1,229 @@
+--// RALINE HUB
+--// KEY SYSTEM : 1801
+--// SIMPLE KEY GUI
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Hapus GUI lama kalau ada
+pcall(function()
+    PlayerGui:FindFirstChild("RALINE_HUB_GUI"):Destroy()
+end)
+
+-- GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "RALINE_HUB_GUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = PlayerGui
+
+-- Main Frame
+local Main = Instance.new("Frame")
+Main.Size = UDim2.new(0, 320, 0, 190)
+Main.Position = UDim2.new(0.5, -160, 0.5, -95)
+Main.BackgroundColor3 = Color3.fromRGB(20,20,20)
+Main.BorderSizePixel = 0
+Main.Parent = ScreenGui
+
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(0,12)
+Corner.Parent = Main
+
+-- Title
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1,0,0,45)
+Title.BackgroundTransparency = 1
+Title.Text = "RALINE HUB"
+Title.TextColor3 = Color3.fromRGB(255,255,255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 24
+Title.Parent = Main
+
+-- Key Box
+local KeyBox = Instance.new("TextBox")
+KeyBox.Size = UDim2.new(0,260,0,40)
+KeyBox.Position = UDim2.new(0.5,-130,0.42,0)
+KeyBox.PlaceholderText = "MASUKAN KEY"
+KeyBox.Text = ""
+KeyBox.TextColor3 = Color3.fromRGB(255,255,255)
+KeyBox.PlaceholderColor3 = Color3.fromRGB(150,150,150)
+KeyBox.BackgroundColor3 = Color3.fromRGB(35,35,35)
+KeyBox.Font = Enum.Font.Gotham
+KeyBox.TextSize = 18
+KeyBox.ClearTextOnFocus = false
+KeyBox.Parent = Main
+
+local BoxCorner = Instance.new("UICorner")
+BoxCorner.CornerRadius = UDim.new(0,10)
+BoxCorner.Parent = KeyBox
+
+-- Status
+local Status = Instance.new("TextLabel")
+Status.Size = UDim2.new(1,0,0,25)
+Status.Position = UDim2.new(0,0,0.68,0)
+Status.BackgroundTransparency = 1
+Status.Text = ""
+Status.TextColor3 = Color3.fromRGB(255,255,255)
+Status.Font = Enum.Font.Gotham
+Status.TextSize = 15
+Status.Parent = Main
+
+-- Button
+local CheckButton = Instance.new("TextButton")
+CheckButton.Size = UDim2.new(0,260,0,42)
+CheckButton.Position = UDim2.new(0.5,-130,0.78,0)
+CheckButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
+CheckButton.Text = "ENTER"
+CheckButton.TextColor3 = Color3.fromRGB(255,255,255)
+CheckButton.Font = Enum.Font.GothamBold
+CheckButton.TextSize = 18
+CheckButton.Parent = Main
+
+local ButtonCorner = Instance.new("UICorner")
+ButtonCorner.CornerRadius = UDim.new(0,10)
+ButtonCorner.Parent = CheckButton
+
+-- Drag GUI
+local dragging = false
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    Main.Position = UDim2.new(
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
+    )
+end
+
+Main.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = Main.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+Main.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+-- Explosion Animation
+local function CreateExplosionEffect()
+    for i = 1, 12 do
+        local Circle = Instance.new("Frame")
+        Circle.Size = UDim2.new(0,10,0,10)
+        Circle.Position = UDim2.new(0.5,-5,0.5,-5)
+        Circle.AnchorPoint = Vector2.new(0.5,0.5)
+        Circle.BackgroundColor3 = Color3.fromRGB(0,170,255)
+        Circle.BorderSizePixel = 0
+        Circle.Parent = Main
+
+        local CircleCorner = Instance.new("UICorner")
+        CircleCorner.CornerRadius = UDim.new(1,0)
+        CircleCorner.Parent = Circle
+
+        local angle = math.rad((360 / 12) * i)
+        local distance = math.random(80,140)
+
+        task.spawn(function()
+            local start = tick()
+            local duration = 0.4
+
+            while tick() - start < duration do
+                local alpha = (tick() - start) / duration
+
+                Circle.Position = UDim2.new(
+                    0.5,
+                    math.cos(angle) * distance * alpha,
+                    0.5,
+                    math.sin(angle) * distance * alpha
+                )
+
+                Circle.BackgroundTransparency = alpha
+                Circle.Size = UDim2.new(0,10 + (15 * alpha),0,10 + (15 * alpha))
+
+                task.wait()
+            end
+
+            Circle:Destroy()
+        end)
+    end
+end
+
+-- Key System
+local CorrectKey = "1801"
+
+local function VerifyKey()
+    if KeyBox.Text == CorrectKey then
+        CreateExplosionEffect()
+        Status.Text = "KEY BENAR"
+        Status.TextColor3 = Color3.fromRGB(0,255,100)
+
+        wait(1)
+
+        -- Contoh setelah login
+        Main:Destroy()
+
+        local Success = Instance.new("TextLabel")
+        Success.Size = UDim2.new(0,260,0,50)
+        Success.Position = UDim2.new(0.5,-130,0.1,0)
+        Success.BackgroundColor3 = Color3.fromRGB(20,20,20)
+        Success.Text = "WELCOME TO RALINE HUB"
+        Success.TextColor3 = Color3.fromRGB(255,255,255)
+        Success.Font = Enum.Font.GothamBold
+        Success.TextSize = 20
+        Success.Parent = ScreenGui
+
+        local SuccessCorner = Instance.new("UICorner")
+        SuccessCorner.CornerRadius = UDim.new(0,10)
+        SuccessCorner.Parent = Success
+
+        -- Fade Out 5 Detik
+        task.spawn(function()
+            local duration = 5
+            local start = tick()
+
+            while tick() - start < duration do
+                local alpha = (tick() - start) / duration
+
+                Success.BackgroundTransparency = alpha
+                Success.TextTransparency = alpha
+
+                task.wait()
+            end
+
+            Success:Destroy()
+        end)
+    else
+        Status.Text = "KEY SALAH"
+        Status.TextColor3 = Color3.fromRGB(255,70,70)
+    end
+end
+
+CheckButton.MouseButton1Click:Connect(VerifyKey)
+
+KeyBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        VerifyKey()
+    end
+end)
